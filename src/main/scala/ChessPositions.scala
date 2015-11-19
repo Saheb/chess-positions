@@ -63,19 +63,19 @@ class ChessPositions(val m : Int, val n : Int, val tokens : List[Char]) {
         if(difference(i,x) == 2 && difference(j,y) == 1)
         {
           if(i == x && j == y)
-            counter(y)(x)
+            counter(x)(y)
           else
             counter(x)(y)  = f(counter(x)(y))
         }
         else if(difference(i,x) == 1 && difference(j,y) == 2)
         {
           if(i == x && j == y)
-            counter(y)(x)
+            counter(x)(y)
           else
             counter(x)(y) = f(counter(x)(y))
         }
         else
-          counter(y)(x)
+          counter(x)(y)
       }
   }
 
@@ -137,30 +137,26 @@ class ChessPositions(val m : Int, val n : Int, val tokens : List[Char]) {
     }
   }
 
-  private def place(i : Int, j : Int, m : Int, n : Int, token : Char) : (Int,Int) = {
+  private def place(i : Int, j : Int, token : Char) : (Int,Int) = {
     if(counter(i)(j) == 0 && notAttacking(i,j,token))
     {
       board(i)(j) = token
       tokenLoc.push(((i,j),token))
-      incCtr(i,j,m,n,token,counter)
+      incCtr(i,j,token)
       (i,j)
     }
     else
     {
       if(j+1 < n)
-        place(i,j+1,m,n,token)
+        place(i,j+1,token)
       else if(i+1 < m)
-        place(i+1,0,m,n,token)
+        place(i+1,0,token)
       else
         (-1,-1)
     }
   }
 
-  private def check(i : Int, j : Int) : Boolean = {
-    true
-  }
-
-  private def incCtr(i : Int, j : Int, m : Int, n : Int, token : Char, counter : Array[Array[Int]]) = {
+  private def incCtr(i : Int, j : Int, token : Char) = {
     token match {
       case 'K' =>
         kingCtr(i,j,m,n,counter,inc)
@@ -177,7 +173,7 @@ class ChessPositions(val m : Int, val n : Int, val tokens : List[Char]) {
     }
   }
 
-  private def decCtr(i : Int, j : Int, m : Int, n : Int, token : Char, counter : Array[Array[Int]]) = {
+  private def decCtr(i : Int, j : Int,token : Char) = {
     token match {
       case 'K' =>
         kingCtr(i,j,m,n,counter,dec)
@@ -198,7 +194,7 @@ class ChessPositions(val m : Int, val n : Int, val tokens : List[Char]) {
     if(tokenLoc.isEmpty)
       return
     val entry = tokenLoc.pop()
-    decCtr(entry._1._1, entry._1._2,m,n,entry._2,counter)
+    decCtr(entry._1._1, entry._1._2,entry._2)
     board(entry._1._1)(entry._1._2) = '*'
     if(entry._1._2+1 < n)
       solve(entry._1._1,entry._1._2+1,index,tokens)
@@ -211,12 +207,9 @@ class ChessPositions(val m : Int, val n : Int, val tokens : List[Char]) {
   private def solve(i : Int, j : Int,index : Int, tokens : List[Char]) : Unit = {
     if(index == tokens.size)
       return
-    val placedLoc = place(i,j,m,n,tokens(index))
+    val placedLoc = place(i,j,tokens(index))
     if(placedLoc._1 != -1)
     {
-      val validPosition = check(i,j)
-      if(validPosition)
-      {
         if(tokenLoc.size == tokens.size)
         {
           solutions += 1
@@ -234,11 +227,6 @@ class ChessPositions(val m : Int, val n : Int, val tokens : List[Char]) {
           else
             displace(tokens(index),index,tokens)
         }
-      }
-      else
-      {
-        printBoard(board,m,n)
-      }
     }
     else // backtrack
     {
@@ -258,15 +246,15 @@ class ChessPositions(val m : Int, val n : Int, val tokens : List[Char]) {
       )
     }
 
-    val seconds = timeTaken/1000000000
-    val minutes = seconds/60
+    val seconds : Double = timeTaken/1000000000
+    val minutes : Double = seconds/60
 
     if(writeToFile)
     {
       val pw = new PrintWriter(new File("Stats.txt" ))
       pw.write(s"Number of Solutions : $solutions\n")
       pw.write(s"Time taken in seconds: $seconds\n")
-      pw.write(s"Time taken in minutes: $minutes")
+      pw.write(s"Time taken in minutes: ${math.round(minutes)}")
       pw.close
       solutions
     }
@@ -274,7 +262,7 @@ class ChessPositions(val m : Int, val n : Int, val tokens : List[Char]) {
     {
       println(s"Number of Solutions : $solutions\n")
       println(s"Time taken in seconds: $seconds\n")
-      println(s"Time taken in minutes: $minutes")
+      println(s"Time taken in minutes: ${math.round(minutes)}")
       solutions
     }
   }
