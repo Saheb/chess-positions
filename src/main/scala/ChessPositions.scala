@@ -23,16 +23,10 @@ class ChessPositions(val m : Int, val n : Int, val tokens : List[Char]) {
   }
 
   private def printBoard(board : Array[Array[Char]], m : Int, n : Int) = {
-    for(i <- 0 until  m)
-    {
-      print(" | ")
-      for(j <- 0 until  n)
-      {
-        print(board(i)(j))
-        print(" | ")
-      }
+    board.foreach(row => {
+      print(row.mkString(" | "))
       println()
-    }
+    })
   }
 
   private def remove(index : Int, list: List[Char]) = list diff List(list(index))
@@ -45,7 +39,7 @@ class ChessPositions(val m : Int, val n : Int, val tokens : List[Char]) {
 
   private def dec(a : Int) = a - 1
 
-  private def kingCtr(i : Int, j : Int, m: Int, n : Int,  counter : Array[Array[Int]], f : Int => Int) = {
+  private def kingCtr(i : Int, j : Int, f : Int => Int) = {
     if(i + 1 < m) counter(i+1)(j) = f(counter(i+1)(j))
     if(j + 1 < n) counter(i)(j+1) = f(counter(i)(j+1))
     if(i-1 >=0) counter(i-1)(j) = f(counter(i-1)(j))
@@ -56,7 +50,7 @@ class ChessPositions(val m : Int, val n : Int, val tokens : List[Char]) {
     if(i-1 >= 0 && j+1 < n) counter(i-1)(j+1) = f(counter(i-1)(j+1))
   }
 
-  private def knightCtr(i : Int, j : Int, m: Int, n : Int,  counter : Array[Array[Int]], f : Int => Int) = {
+  private def knightCtr(i : Int, j : Int, f : Int => Int) = {
     for(x <- 0 until m)
       for(y <- 0 until n)
       {
@@ -79,7 +73,7 @@ class ChessPositions(val m : Int, val n : Int, val tokens : List[Char]) {
       }
   }
 
-  private def bishopCtr(i : Int, j : Int, m: Int, n : Int,  counter : Array[Array[Int]], f : Int => Int) = {
+  private def bishopCtr(i : Int, j : Int, f : Int => Int) = {
     for(x <- 0 until m)
       for(y <- 0 until n)
       {
@@ -91,7 +85,7 @@ class ChessPositions(val m : Int, val n : Int, val tokens : List[Char]) {
       }
   }
 
-  private def rookCtr(i : Int, j : Int, m : Int , n : Int, counter : Array[Array[Int]], f : Int => Int) = {
+  private def rookCtr(i : Int, j : Int, f : Int => Int) = {
     for(x <- 0 until j)
       counter(i)(x) = f(counter(i)(x))
     for(x <- j+1 until n)
@@ -159,16 +153,16 @@ class ChessPositions(val m : Int, val n : Int, val tokens : List[Char]) {
   private def incCtr(i : Int, j : Int, token : Char) = {
     token match {
       case 'K' =>
-        kingCtr(i,j,m,n,counter,inc)
+        kingCtr(i,j,inc)
       case 'Q' =>
-        bishopCtr(i,j,m,n,counter,inc)
-        rookCtr(i,j,m,n,counter,inc)
+        bishopCtr(i,j,inc)
+        rookCtr(i,j,inc)
       case 'R' =>
-        rookCtr(i,j,m,n,counter,inc)
+        rookCtr(i,j,inc)
       case 'B' =>
-        bishopCtr(i,j,m,n,counter,inc)
+        bishopCtr(i,j,inc)
       case 'N' =>
-        knightCtr(i,j,m,n,counter,inc)
+        knightCtr(i,j,inc)
       case  _ => println("This should never be printed!")
     }
   }
@@ -176,21 +170,21 @@ class ChessPositions(val m : Int, val n : Int, val tokens : List[Char]) {
   private def decCtr(i : Int, j : Int,token : Char) = {
     token match {
       case 'K' =>
-        kingCtr(i,j,m,n,counter,dec)
+        kingCtr(i,j,dec)
       case 'Q' =>
-        bishopCtr(i,j,m,n,counter,dec)
-        rookCtr(i,j,m,n,counter,dec)
+        bishopCtr(i,j,dec)
+        rookCtr(i,j,dec)
       case 'R' =>
-        rookCtr(i,j,m,n,counter,dec)
+        rookCtr(i,j,dec)
       case 'B' =>
-        bishopCtr(i,j,m,n,counter,dec)
+        bishopCtr(i,j,dec)
       case 'N' =>
-        knightCtr(i,j,m,n,counter,dec)
+        knightCtr(i,j,dec)
       case  _ => println("This should never be printed!")
     }
   }
 
-  private def displace(token : Char,index : Int, tokens : List[Char]) : Unit = {
+  private def displace(index : Int, tokens : List[Char]) : Unit = {
     if(tokenLoc.isEmpty)
       return
     val entry = tokenLoc.pop()
@@ -201,7 +195,7 @@ class ChessPositions(val m : Int, val n : Int, val tokens : List[Char]) {
     else if(entry._1._1+1 < m)
       solve(entry._1._1+1,0,index,tokens)
     else
-      displace(tokens(index),index-1,tokens)
+      displace(index-1,tokens)
   }
 
   private def solve(i : Int, j : Int,index : Int, tokens : List[Char]) : Unit = {
@@ -216,7 +210,7 @@ class ChessPositions(val m : Int, val n : Int, val tokens : List[Char]) {
           println(s"Solution #$solutions")
           printBoard(board,m,n)
           println()
-          displace(tokens(index),index,tokens)
+          displace(index,tokens)
         }
         else
         {
@@ -225,12 +219,12 @@ class ChessPositions(val m : Int, val n : Int, val tokens : List[Char]) {
           else if (placedLoc._1+1 < m)
             solve(placedLoc._1+1,0,index+1,tokens)
           else
-            displace(tokens(index),index,tokens)
+            displace(index,tokens)
         }
     }
     else // backtrack
     {
-      displace(tokens(index),index-1,tokens)
+      displace(index-1,tokens)
     }
   }
 
