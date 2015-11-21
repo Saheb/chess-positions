@@ -6,7 +6,7 @@ package main
 
 import java.io._
 
-import scala.collection.mutable.Stack
+import scala.collection.mutable.{Stack,Map}
 
 class ChessPositions(val m : Int, val n : Int, val tokens : List[Char]) {
 
@@ -22,11 +22,19 @@ class ChessPositions(val m : Int, val n : Int, val tokens : List[Char]) {
     t1 - t0
   }
 
-  private def printBoard(board : Array[Array[Char]], m : Int, n : Int) = {
+  private def printBoard() = {
     board.foreach(row => {
       print(row.mkString(" | "))
       println()
     })
+  }
+
+  private def printBoardReflection() = {
+    for(row <- 0 until  m)
+      {
+        print(board(m - 1 - row).mkString(" | "))
+        println()
+      }
   }
 
   private def remove(index : Int, list: List[Char]) = list diff List(list(index))
@@ -51,26 +59,22 @@ class ChessPositions(val m : Int, val n : Int, val tokens : List[Char]) {
   }
 
   private def knightCtr(i : Int, j : Int, f : Int => Int) = {
-    for(x <- 0 until m)
-      for(y <- 0 until n)
-      {
-        if(difference(i,x) == 2 && difference(j,y) == 1)
-        {
-          if(i == x && j == y)
-            counter(x)(y)
-          else
-            counter(x)(y)  = f(counter(x)(y))
-        }
-        else if(difference(i,x) == 1 && difference(j,y) == 2)
-        {
-          if(i == x && j == y)
-            counter(x)(y)
-          else
-            counter(x)(y) = f(counter(x)(y))
-        }
-        else
-          counter(x)(y)
-      }
+    if(i + 2 < m && j + 1 < n)
+      counter(i+2)(j+1) = f(counter(i+2)(j+1))
+    if(i + 2 < m && j - 1 >= 0)
+      counter(i+2)(j-1) = f(counter(i+2)(j-1))
+    if(i-2 >= 0 && j-1 >=0)
+      counter(i-2)(j-1) = f(counter(i-2)(j-1))
+    if(i-2 >=0 && j+1 < n)
+      counter(i-2)(j+1) = f(counter(i-2)(j+1))
+    if(i + 1 < m && j + 2 < n)
+      counter(i+1)(j+2) = f(counter(i+1)(j+2))
+    if(i + 1 < m && j - 2 >= 0)
+      counter(i+1)(j-2) = f(counter(i+1)(j-2))
+    if(i-1 >= 0 && j-2 >=0)
+      counter(i-1)(j-2) = f(counter(i-1)(j-2))
+    if(i-1 >=0 && j+2 < n)
+      counter(i-1)(j+2) = f(counter(i-1)(j+2))
   }
 
   private def bishopCtr(i : Int, j : Int, f : Int => Int) = {
@@ -208,8 +212,15 @@ class ChessPositions(val m : Int, val n : Int, val tokens : List[Char]) {
         {
           solutions += 1
           println(s"Solution #$solutions")
-          printBoard(board,m,n)
+          printBoard()
           println()
+          if(tokens != tokens.reverse)
+          {
+            solutions += 1
+            println(s"Solution #$solutions")
+            printBoardReflection()
+            println()
+          }
           displace(index,tokens)
         }
         else
@@ -229,13 +240,20 @@ class ChessPositions(val m : Int, val n : Int, val tokens : List[Char]) {
   }
 
   def run(writeToFile : Boolean = false) : Int = {
+    val permutations = Map.empty[List[Char],Int]
+    tokens.permutations.foreach( item => {
+      permutations.put(item,0)
+    })
+    tokens.permutations.foreach(entry =>
+      if(permutations.contains(entry.reverse) && entry != entry.reverse) permutations.remove(entry))
+
     val timeTaken = time {
-      tokens.permutations.foreach(
-        items => {
-          //println(items)
+      permutations.foreach(
+        entry => {
+          //println(entry._1)
           board = Array.fill(m,n)('*')
           counter = Array.fill(m,n)(0)
-          solve(0,0,0,items)
+          solve(0,0,0,entry._1)
         }
       )
     }
@@ -249,7 +267,7 @@ class ChessPositions(val m : Int, val n : Int, val tokens : List[Char]) {
       pw.write(s"Number of Solutions : $solutions\n")
       pw.write(s"Time taken in seconds: $seconds\n")
       pw.write(s"Time taken in minutes: ${math.round(minutes)}")
-      pw.close
+      pw.close()
       solutions
     }
     else
