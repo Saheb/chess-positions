@@ -21,9 +21,4 @@ class BasicPositions extends FunSuite {
     val test = new ChessPositions(8,8,List('Q','Q','Q','Q','Q','Q','Q','Q'))
     assertResult(test.run())(92)
   }
-
-  test("6 Queens in 6 X 6") {
-    val test = new ChessPositions(6,6,List('Q','Q','Q','Q','Q','Q'))
-    assertResult(test.run())(4)
-  }
 }
