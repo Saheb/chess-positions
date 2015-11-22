@@ -7,6 +7,7 @@ package main
 import java.io._
 
 import scala.collection.mutable.{Stack,Map}
+import scala.util.{Success, Try}
 
 class ChessPositions(val m : Int, val n : Int, val tokens : List[Char]) {
 
@@ -22,9 +23,17 @@ class ChessPositions(val m : Int, val n : Int, val tokens : List[Char]) {
     t1 - t0
   }
 
-  private def printBoard() = println(board map (_ mkString " | ") mkString "\n")
+  private def printBoard() = {
+    println(s"Solution #$solutions")
+    println(board map (_ mkString " | ") mkString "\n")
+    println()
+  }
 
-  private def printBoardReflection() = println(board reverseMap (_ mkString " | ") mkString "\n")
+  private def printBoardReflection() = {
+    println(s"Solution #$solutions")
+    println(board reverseMap (_ mkString " | ") mkString "\n")
+    println()
+  }
 
   private def remove(index : Int, list: List[Char]) = list diff List(list(index))
 
@@ -177,38 +186,30 @@ class ChessPositions(val m : Int, val n : Int, val tokens : List[Char]) {
     }
   }
 
-  private def displace(index : Int, tokens : List[Char]) : Unit = {
-    if(tokenLoc.isEmpty)
-      return
+  private def displace(index : Int, tokens : List[Char]) : Try[Unit] = Try{
     val entry = tokenLoc.pop()
     decCtr(entry._1._1, entry._1._2,entry._2)
     board(entry._1._1)(entry._1._2) = '*'
     if(entry._1._2+1 < n)
-      solve(entry._1._1,entry._1._2+1,index,tokens)
+      Success(solve(entry._1._1,entry._1._2+1,index,tokens))
     else if(entry._1._1+1 < m)
-      solve(entry._1._1+1,0,index,tokens)
+      Success(solve(entry._1._1+1,0,index,tokens))
     else
       displace(index-1,tokens)
   }
 
   private def solve(i : Int, j : Int,index : Int, tokens : List[Char]) : Unit = {
-    if(index == tokens.size)
-      return
     val placedLoc = place(i,j,tokens(index))
     if(placedLoc._1 != -1)
     {
         if(tokenLoc.size == tokens.size)
         {
           solutions += 1
-          println(s"Solution #$solutions")
           printBoard()
-          println()
           if(tokens != tokens.reverse)
           {
             solutions += 1
-            println(s"Solution #$solutions")
             printBoardReflection()
-            println()
           }
           displace(index,tokens)
         }
@@ -257,22 +258,31 @@ class ChessPositions(val m : Int, val n : Int, val tokens : List[Char]) {
       pw.write(s"Time taken in seconds: $seconds\n")
       pw.write(s"Time taken in minutes: ${math.round(minutes)}")
       pw.close()
-      solutions
     }
-    else
-    {
-      println(s"Number of Solutions : $solutions\n")
-      println(s"Time taken in seconds: $seconds\n")
-      println(s"Time taken in minutes: ${math.round(minutes)}")
-      solutions
-    }
+
+    println(s"Number of Solutions : $solutions\n")
+    println(s"Time taken in seconds: $seconds\n")
+    println(s"Time taken in minutes: ${math.round(minutes)}")
+    solutions
   }
 }
 
 object ChessPositions extends App {
-  val tokens = List('K','K','Q','Q','B','B','N')
-  val m = 7
-  val n = 7
-  val runner = new ChessPositions(m,n,tokens)
+  val in = new java.util.Scanner(System.in)
+  println("Dimensions of board M N?")
+  val M = in.nextInt()
+  val N = in.nextInt()
+  println("Number of Kings(K)?")
+  val k = in.nextInt()
+  println("Number of Queens(Q)?")
+  val q = in.nextInt()
+  println("Number of Knights(N)?")
+  val n = in.nextInt()
+  println("Number of Bishops(B)?")
+  val b = in.nextInt()
+  println("Number of Rooks(R)?")
+  val r = in.nextInt()
+  val tokens = Seq.fill(k)('K') ++ Seq.fill(q)('Q') ++ Seq.fill(n)('N') ++ Seq.fill(b)('B') ++ Seq.fill(r)('R')
+  val runner = new ChessPositions(M,N,tokens.toList)
   runner.run(true)
 }
