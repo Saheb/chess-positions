@@ -91,33 +91,33 @@ class ChessPositions(val m : Int, val n : Int, val tokens : List[Char]) {
 
   private def notAttacking(i : Int, j :Int, token : Char)  : Boolean = {
 
-    def kingAttackFn(entry : ((Int,Int),Char)) = {
+    def kingAttackFn(entry : ((Int,Int),Char)) : Boolean = {
       difference(entry._1._1, i) <= 1 && difference(entry._1._2,j) <= 1
     }
 
-    def rookAttackFn(entry : ((Int,Int),Char)) = {
+    def rookAttackFn(entry : ((Int,Int),Char)) : Boolean = {
       difference(entry._1._1, i) == 0 || difference(entry._1._2,j) == 0
     }
 
-    def knightAttackFn(entry : ((Int,Int),Char)) = {
+    def knightAttackFn(entry : ((Int,Int),Char)) : Boolean = {
       (difference(entry._1._1, i) == 2 && difference(entry._1._2,j) == 1) ||  (difference(entry._1._1, i) == 1 && difference(entry._1._2,j) == 2)
     }
 
-    def bishopAttachFn(entry : ((Int,Int),Char)) = {
+    def bishopAttachFn(entry : ((Int,Int),Char)) : Boolean = {
       difference(entry._1._1, i) == difference(entry._1._2,j)
     }
 
     token match {
       case 'K' =>
-        tokenLoc filter kingAttackFn isEmpty
+        !(tokenLoc exists kingAttackFn)
       case 'Q' =>
-        (tokenLoc filter rookAttackFn isEmpty) && (tokenLoc filter bishopAttachFn isEmpty)
+        !((tokenLoc exists rookAttackFn) || (tokenLoc exists bishopAttachFn))
       case 'R' =>
-        tokenLoc filter rookAttackFn isEmpty
+        !(tokenLoc exists rookAttackFn)
       case 'N' =>
-        tokenLoc filter knightAttackFn isEmpty
+        !(tokenLoc exists knightAttackFn)
       case 'B' =>
-        tokenLoc filter bishopAttachFn isEmpty
+        !(tokenLoc exists bishopAttachFn)
       case  _ =>
         println("This should never be printed!")
         false
