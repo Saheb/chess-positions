@@ -22,20 +22,9 @@ class ChessPositions(val m : Int, val n : Int, val tokens : List[Char]) {
     t1 - t0
   }
 
-  private def printBoard() = {
-    board.foreach(row => {
-      print(row.mkString(" | "))
-      println()
-    })
-  }
+  private def printBoard() = println(board map (_ mkString " | ") mkString "\n")
 
-  private def printBoardReflection() = {
-    for(row <- 0 until  m)
-      {
-        print(board(m - 1 - row).mkString(" | "))
-        println()
-      }
-  }
+  private def printBoardReflection() = println(board reverseMap (_ mkString " | ") mkString "\n")
 
   private def remove(index : Int, list: List[Char]) = list diff List(list(index))
 
