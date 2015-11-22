@@ -7,6 +7,7 @@ package main
 import java.io._
 
 import scala.collection.mutable.{Stack,Map}
+import scala.util.{Success, Try}
 
 class ChessPositions(val m : Int, val n : Int, val tokens : List[Char]) {
 
@@ -14,6 +15,7 @@ class ChessPositions(val m : Int, val n : Int, val tokens : List[Char]) {
   private var counter = Array.fill(m,n)(0)
   private val tokenLoc = new Stack[((Int,Int),Char)]()
   private var solutions = 0
+  private val attackCache = Map.empty[((Int,Int,Char),(Int,Int,Char)),Boolean]
 
   private def time[R](block: => Unit): Long = {
     val t0 = System.nanoTime()
@@ -22,9 +24,17 @@ class ChessPositions(val m : Int, val n : Int, val tokens : List[Char]) {
     t1 - t0
   }
 
-  private def printBoard() = println(board map (_ mkString " | ") mkString "\n")
+  private def printBoard() = {
+    println(s"Solution #$solutions")
+    println(board map (_ mkString " | ") mkString "\n")
+    println()
+  }
 
-  private def printBoardReflection() = println(board reverseMap (_ mkString " | ") mkString "\n")
+  private def printBoardReflection() = {
+      println(s"Solution #$solutions")
+      println(board reverseMap (_ mkString " | ") mkString "\n")
+      println()
+    }
 
   private def remove(index : Int, list: List[Char]) = list diff List(list(index))
 
@@ -70,7 +80,7 @@ class ChessPositions(val m : Int, val n : Int, val tokens : List[Char]) {
     for(x <- 0 until m)
       for(y <- 0 until n)
       {
-        if(difference(i,x) == difference(j,y) )
+        if(difference(i,x) == difference(j,y))
           if(i == x && j == y)
             counter(y)(x)
           else
@@ -89,39 +99,82 @@ class ChessPositions(val m : Int, val n : Int, val tokens : List[Char]) {
       counter(y)(j) = f(counter(y)(j))
   }
 
+  private def loadCache() : Unit = {
+    def kingAttackFn(entry : (Int,Int,Char), entry2 : (Int,Int,Char)) : Boolean = {
+      difference(entry._1, entry2._1) <= 1 && difference(entry._2,entry2._2) <= 1
+    }
+
+    def rookAttackFn(entry : (Int,Int,Char), entry2 : (Int,Int,Char)) : Boolean = {
+      difference(entry._1, entry2._1) == 0 || difference(entry._2,entry2._2) == 0
+    }
+
+    def knightAttackFn(entry : (Int,Int,Char), entry2 : (Int,Int,Char)) : Boolean = {
+      (difference(entry._1, entry2._1) == 2 && difference(entry._2,entry2._2) == 1) || (difference(entry._1, entry2._1) == 1 && difference(entry._2,entry2._2) == 2)
+    }
+
+    def bishopAttachFn(entry : (Int,Int,Char), entry2 : (Int,Int,Char)) : Boolean = {
+      difference(entry._1, entry2._1) == difference(entry._2,entry2._2)
+    }
+
+    val distinctTokens = tokens.distinct
+    for(a<- 0 until m) {
+      for (b <- 0 until n) {
+        for (x <- 0 until distinctTokens.size) {
+          for (y <- 0 until distinctTokens.size) {
+            for (i <- 0 until m) {
+              for (j <- 0 until n) {
+                distinctTokens(x) match {
+                  case 'K' =>
+                    if(kingAttackFn((a, b, distinctTokens(x)),(i,j,distinctTokens(y))))
+                      {
+                        attackCache.update(((a, b, distinctTokens(x)), (i,j,distinctTokens(y))), true)
+                        attackCache.update(((i,j,distinctTokens(y)),(a, b, distinctTokens(x))), true)
+                      }
+                  case 'Q' =>
+                    if(rookAttackFn((a, b, distinctTokens(x)),(i,j,distinctTokens(y))) || bishopAttachFn((a, b, distinctTokens(x)),(i,j,distinctTokens(y))))
+                      {
+                        attackCache.update(((a, b, distinctTokens(x)), (i,j,distinctTokens(y))), true)
+                        attackCache.update(((i,j,distinctTokens(y)),(a, b, distinctTokens(x))), true)
+                      }
+                  case 'R' =>
+                    if(rookAttackFn((a, b, distinctTokens(x)),(i,j,distinctTokens(y))))
+                      {
+                        attackCache.update(((a, b, distinctTokens(x)), (i,j,distinctTokens(y))), true)
+                        attackCache.update(((i,j,distinctTokens(y)),(a, b, distinctTokens(x))), true)
+                      }
+                  case 'N' =>
+                    if(knightAttackFn((a, b, distinctTokens(x)),(i,j,distinctTokens(y))))
+                      {
+                        attackCache.update(((a, b, distinctTokens(x)), (i,j,distinctTokens(y))), true)
+                        attackCache.update(((i,j,distinctTokens(y)),(a, b, distinctTokens(x))), true)
+                      }
+                  case 'B' =>
+                    if(bishopAttachFn((a, b, distinctTokens(x)),(i,j,distinctTokens(y))))
+                      {
+                        attackCache.update(((a, b, distinctTokens(x)), (i,j,distinctTokens(y))), true)
+                        attackCache.update(((i,j,distinctTokens(y)),(a, b, distinctTokens(x))), true)
+                      }
+                  case _ =>
+                    println("This should never be printed!")
+                    false
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    attackCache = attackCache filter(p => p._1._1._3 != p._1._2._3)
+  }
+
+
   private def notAttacking(i : Int, j :Int, token : Char)  : Boolean = {
 
-    def kingAttackFn(entry : ((Int,Int),Char)) : Boolean = {
-      difference(entry._1._1, i) <= 1 && difference(entry._1._2,j) <= 1
+    def cacheFn(entry : ((Int,Int),Char)) : Boolean = {
+      attackCache.getOrElse(((entry._1._1,entry._1._2,entry._2),(i,j,token)),false)
     }
 
-    def rookAttackFn(entry : ((Int,Int),Char)) : Boolean = {
-      difference(entry._1._1, i) == 0 || difference(entry._1._2,j) == 0
-    }
-
-    def knightAttackFn(entry : ((Int,Int),Char)) : Boolean = {
-      (difference(entry._1._1, i) == 2 && difference(entry._1._2,j) == 1) ||  (difference(entry._1._1, i) == 1 && difference(entry._1._2,j) == 2)
-    }
-
-    def bishopAttachFn(entry : ((Int,Int),Char)) : Boolean = {
-      difference(entry._1._1, i) == difference(entry._1._2,j)
-    }
-
-    token match {
-      case 'K' =>
-        !(tokenLoc exists kingAttackFn)
-      case 'Q' =>
-        !((tokenLoc exists rookAttackFn) || (tokenLoc exists bishopAttachFn))
-      case 'R' =>
-        !(tokenLoc exists rookAttackFn)
-      case 'N' =>
-        !(tokenLoc exists knightAttackFn)
-      case 'B' =>
-        !(tokenLoc exists bishopAttachFn)
-      case  _ =>
-        println("This should never be printed!")
-        false
-    }
+    !(tokenLoc exists cacheFn)
   }
 
   private def place(i : Int, j : Int, token : Char) : (Int,Int) = {
@@ -156,7 +209,8 @@ class ChessPositions(val m : Int, val n : Int, val tokens : List[Char]) {
         bishopCtr(i,j,inc)
       case 'N' =>
         knightCtr(i,j,inc)
-      case  _ => println("This should never be printed!")
+      case  _ =>
+        println("This should never be printed!")
     }
   }
 
@@ -173,20 +227,19 @@ class ChessPositions(val m : Int, val n : Int, val tokens : List[Char]) {
         bishopCtr(i,j,dec)
       case 'N' =>
         knightCtr(i,j,dec)
-      case  _ => println("This should never be printed!")
+      case  _ =>
+        println("This should never be printed!")
     }
   }
 
-  private def displace(index : Int, tokens : List[Char]) : Unit = {
-    if(tokenLoc.isEmpty)
-      return
+  private def displace(index : Int, tokens : List[Char]) : Try[Unit] = Try{
     val entry = tokenLoc.pop()
     decCtr(entry._1._1, entry._1._2,entry._2)
     board(entry._1._1)(entry._1._2) = '*'
     if(entry._1._2+1 < n)
-      solve(entry._1._1,entry._1._2+1,index,tokens)
+      Success(solve(entry._1._1,entry._1._2+1,index,tokens))
     else if(entry._1._1+1 < m)
-      solve(entry._1._1+1,0,index,tokens)
+      Success(solve(entry._1._1+1,0,index,tokens))
     else
       displace(index-1,tokens)
   }
@@ -200,15 +253,11 @@ class ChessPositions(val m : Int, val n : Int, val tokens : List[Char]) {
         if(tokenLoc.size == tokens.size)
         {
           solutions += 1
-          println(s"Solution #$solutions")
           printBoard()
-          println()
           if(tokens != tokens.reverse)
           {
             solutions += 1
-            println(s"Solution #$solutions")
             printBoardReflection()
-            println()
           }
           displace(index,tokens)
         }
@@ -237,11 +286,12 @@ class ChessPositions(val m : Int, val n : Int, val tokens : List[Char]) {
       if(permutations.contains(entry.reverse) && entry != entry.reverse) permutations.remove(entry))
 
     val timeTaken = time {
+      board = Array.fill(m,n)('*')
+      counter = Array.fill(m,n)(0)
+      loadCache()
       permutations.foreach(
         entry => {
           //println(entry._1)
-          board = Array.fill(m,n)('*')
-          counter = Array.fill(m,n)(0)
           solve(0,0,0,entry._1)
         }
       )
