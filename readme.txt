@@ -1,2 +1,3 @@
-Add this flag as argument to increase stack size to 50MB while running the program.
--Xss128m
+1) Run the ChessPositions object
+2) Enter the input parameters
+3) You will see solutions and time taken on the console

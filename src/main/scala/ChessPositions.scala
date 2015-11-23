@@ -6,8 +6,8 @@ package main
 
 import java.io._
 
+import scala.annotation.tailrec
 import scala.collection.mutable.{Stack,Map}
-import scala.util.{Success, Try}
 
 class ChessPositions(val m : Int, val n : Int, val tokens : List[Char]) {
 
@@ -75,15 +75,28 @@ class ChessPositions(val m : Int, val n : Int, val tokens : List[Char]) {
       counter(i-1)(j+2) = f(counter(i-1)(j+2))
   }
 
-  private def bishopCtr(i : Int, j : Int, f : Int => Int) = {
-    for(x <- 0 until m)
-      for(y <- 0 until n)
+
+  private def bishopCtr(i : Int, j : Int, f : Int => Int)= {
+    for(a<-1 until math.min(m,n))
       {
-        if(difference(i,x) == difference(j,y) )
-          if(i == x && j == y)
-            counter(y)(x)
-          else
-            counter(x)(y) = f(counter(x)(y))
+        if(i+a < m && j+a < n)
+        {
+          counter(i+a)(j+a) = f(counter(i+a)(j+a))
+        }
+        
+        if(i+a< m && j-a >= 0)
+        {
+          counter(i+a)(j-a) = f(counter(i+a)(j-a))
+        }
+
+        if(i-a >= 0 && j+a < n)
+        {
+          counter(i-a)(j+a) = f(counter(i-a)(j+a))
+        }
+        if(i-a >= 0 && j-a >= 0)
+        {
+          counter(i-a)(j-a) = f(counter(i-a)(j-a))
+        }
       }
   }
 
@@ -186,19 +199,23 @@ class ChessPositions(val m : Int, val n : Int, val tokens : List[Char]) {
     }
   }
 
-  private def displace(index : Int, tokens : List[Char]) : Try[Unit] = Try{
-    val entry = tokenLoc.pop()
-    decCtr(entry._1._1, entry._1._2,entry._2)
-    board(entry._1._1)(entry._1._2) = '*'
-    if(entry._1._2+1 < n)
-      Success(solve(entry._1._1,entry._1._2+1,index,tokens))
-    else if(entry._1._1+1 < m)
-      Success(solve(entry._1._1+1,0,index,tokens))
-    else
-      displace(index-1,tokens)
+  @tailrec
+  private def displace(index : Int, tokens : List[Char]) : (Int,Int,Int) = {
+    if(tokenLoc.isEmpty)
+      (m,n,index)
+    else{
+      val entry = tokenLoc.pop()
+      decCtr(entry._1._1, entry._1._2,entry._2)
+      board(entry._1._1)(entry._1._2) = '*'
+      if(entry._1._2 + 1 >= n && entry._1._1+1 >= m)
+        displace(index-1,tokens)
+      else
+        (entry._1._1,entry._1._2,index)
+    }
   }
 
-  private def solve(i : Int, j : Int,index : Int, tokens : List[Char]) : Unit = {
+  @tailrec
+  private def solve(i : Int, j : Int,index : Int, tokens : List[Char]) : Int = {
     val placedLoc = place(i,j,tokens(index))
     if(placedLoc._1 != -1)
     {
@@ -211,7 +228,13 @@ class ChessPositions(val m : Int, val n : Int, val tokens : List[Char]) {
             solutions += 1
             printBoardReflection()
           }
-          displace(index,tokens)
+          val entry = displace(index,tokens)
+          if(entry._2+1 < n)
+            solve(entry._1,entry._2+1,entry._3,tokens)
+          else if(entry._1+1 < m)
+            solve(entry._1+1,0,entry._3,tokens)
+          else
+            -1
         }
         else
         {
@@ -219,13 +242,26 @@ class ChessPositions(val m : Int, val n : Int, val tokens : List[Char]) {
             solve(placedLoc._1,placedLoc._2+1,index+1,tokens)
           else if (placedLoc._1+1 < m)
             solve(placedLoc._1+1,0,index+1,tokens)
-          else
-            displace(index,tokens)
+          else {
+            val entry = displace(index, tokens)
+            if (entry._2 + 1 < n)
+              solve(entry._1, entry._2 + 1, entry._3, tokens)
+            else if (entry._1 + 1 < m)
+              solve(entry._1 + 1, 0, entry._3, tokens)
+            else
+              -1
+          }
         }
     }
     else // backtrack
     {
-      displace(index-1,tokens)
+      val entry = displace(index-1,tokens)
+      if (entry._2 + 1 < n)
+        solve(entry._1, entry._2 + 1, entry._3, tokens)
+      else if (entry._1 + 1 < m)
+        solve(entry._1 + 1, 0, entry._3, tokens)
+      else
+        -1
     }
   }
 
