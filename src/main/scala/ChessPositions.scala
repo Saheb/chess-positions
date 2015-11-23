@@ -288,14 +288,19 @@ class ChessPositions(val m : Int, val n : Int, val tokens : List[Char]) {
     if(writeToFile)
     {
       val pw = new PrintWriter(new File("Stats.txt" ))
+      pw.write(s"Stats are gathered by running the program on Intellij Idea 14.1.4\n")
+      pw.write(s"Dimensions of the board are $m rows and $n columns\n")
+      pw.write(s"Tokens for the problem are $tokens\n")
       pw.write(s"Number of Solutions : $solutions\n")
       pw.write(s"Time taken in seconds: $seconds\n")
       pw.write(s"Time taken in minutes: ${math.round(minutes)}")
       pw.close()
     }
 
-    println(s"Number of Solutions : $solutions\n")
-    println(s"Time taken in seconds: $seconds\n")
+    println(s"Dimensions of the board are $m rows and $n columns")
+    println(s"Tokens for the problem are $tokens")
+    println(s"Number of Solutions : $solutions")
+    println(s"Time taken in seconds: $seconds")
     println(s"Time taken in minutes: ${math.round(minutes)}")
     solutions
   }
@@ -318,5 +323,5 @@ object ChessPositions extends App {
   val r = in.nextInt()
   val tokens = Seq.fill(k)('K') ++ Seq.fill(q)('Q') ++ Seq.fill(n)('N') ++ Seq.fill(b)('B') ++ Seq.fill(r)('R')
   val runner = new ChessPositions(M,N,tokens.toList)
-  runner.run(true)
+  runner.run()// change to true to write resutls to Stats.txt
 }

@@ -1,3 +1,6 @@
+Stats are gathered by running the program on Intellij Idea 14.1.4
+Dimensions of the board are 7 rows and 7 columns
+Tokens for the problem are List(K, K, Q, Q, N, B, B)
 Number of Solutions : 3063828
-Time taken in seconds: 58.0
+Time taken in seconds: 59.0
 Time taken in minutes: 1
