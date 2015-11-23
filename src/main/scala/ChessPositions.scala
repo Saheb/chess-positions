@@ -35,10 +35,6 @@ class ChessPositions(val m : Int, val n : Int, val tokens : List[Char]) {
     println()
   }
 
-  private def remove(index : Int, list: List[Char]) = list diff List(list(index))
-
-  private def shift(list: List[Char])  = remove(0, list) :+ list.head
-
   private def difference(a : Int, b : Int)  = math.abs(a-b)
 
   private def inc(a : Int) = a + 1
@@ -146,6 +142,7 @@ class ChessPositions(val m : Int, val n : Int, val tokens : List[Char]) {
     }
   }
 
+  @tailrec
   private def place(i : Int, j : Int, token : Char) : (Int,Int) = {
     if(counter(i)(j) == 0 && notAttacking(i,j,token))
     {
@@ -203,7 +200,8 @@ class ChessPositions(val m : Int, val n : Int, val tokens : List[Char]) {
   private def displace(index : Int, tokens : List[Char]) : (Int,Int,Int) = {
     if(tokenLoc.isEmpty)
       (m,n,index)
-    else{
+    else
+    {
       val entry = tokenLoc.pop()
       decCtr(entry._1._1, entry._1._2,entry._2)
       board(entry._1._1)(entry._1._2) = '*'
@@ -228,7 +226,7 @@ class ChessPositions(val m : Int, val n : Int, val tokens : List[Char]) {
             solutions += 1
             printBoardReflection()
           }
-          val entry = displace(index,tokens)
+          val entry = displace(index,tokens) // backtrack
           if(entry._2+1 < n)
             solve(entry._1,entry._2+1,entry._3,tokens)
           else if(entry._1+1 < m)
@@ -240,9 +238,10 @@ class ChessPositions(val m : Int, val n : Int, val tokens : List[Char]) {
         {
           if(placedLoc._2 +1 < n)
             solve(placedLoc._1,placedLoc._2+1,index+1,tokens)
-          else if (placedLoc._1+1 < m)
+          else if(placedLoc._1+1 < m)
             solve(placedLoc._1+1,0,index+1,tokens)
-          else {
+          else // backtrack
+          {
             val entry = displace(index, tokens)
             if (entry._2 + 1 < n)
               solve(entry._1, entry._2 + 1, entry._3, tokens)
@@ -267,16 +266,15 @@ class ChessPositions(val m : Int, val n : Int, val tokens : List[Char]) {
 
   def run(writeToFile : Boolean = false) : Int = {
     val permutations = Map.empty[List[Char],Int]
-    tokens.permutations.foreach( item => {
-      permutations.put(item,0)
-    })
-    tokens.permutations.foreach(entry =>
-      if(permutations.contains(entry.reverse) && entry != entry.reverse) permutations.remove(entry))
-
     val timeTaken = time {
+      tokens.permutations.foreach(item => {
+        permutations.put(item,0)
+      })
+      tokens.permutations.foreach(entry =>
+        if(permutations.contains(entry.reverse) && entry != entry.reverse) permutations.remove(entry))
+
       permutations.foreach(
         entry => {
-          //println(entry._1)
           board = Array.fill(m,n)('*')
           counter = Array.fill(m,n)(0)
           solve(0,0,0,entry._1)
