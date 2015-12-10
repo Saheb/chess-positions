@@ -14,3 +14,6 @@ From IDE:
 
 P.S. Stats.txt contains stats for 1 use case.
 Stats might vary running on unix terminals vs IDEs.
+
+The solution number printing might be misleading i.e. not sequential
+because its running parallely for each permutation.

@@ -1,9 +1,22 @@
 package main
+
+import scala.collection.mutable
+
 /**
  * Created by saheb on 12/10/15.
  */
 
 object Util {
+
+  def getUniquePermutations(tokens: List[Char]): List[List[Char]] = {
+    val permutations = mutable.Set.empty[List[Char]]
+    tokens.permutations.foreach(items => {
+      permutations.add(items)
+    })
+    tokens.permutations.foreach(entry =>
+      if (permutations.contains(entry.reverse) && entry != entry.reverse) permutations.remove(entry))
+    permutations.toList
+  }
 
   def getBoard(p: Piece , board: List[List[Char]]): List[List[Char]] = {
     val row = board(p.x)
@@ -12,11 +25,11 @@ object Util {
     newBoard
   }
 
-  def time[R](block: => Unit): Long = {
+  def time[R](block: => Int): Result = {
     val t0 = System.nanoTime()
-    block
+    val solutions = block
     val t1 = System.nanoTime()
-    t1 - t0
+    Result(t1 - t0, solutions)
   }
 
   def printBoard(board: List[List[Char]], solutionNum: Int) = {
@@ -36,6 +49,5 @@ object Util {
   def inc(a: Int) = a + 1
 
   def dec(a: Int) = a - 1
-
 }
 
