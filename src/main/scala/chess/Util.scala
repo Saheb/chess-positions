@@ -1,4 +1,4 @@
-package main
+package chess
 
 import scala.collection.mutable
 
@@ -23,6 +23,18 @@ object Util {
     val newRow = row.splitAt(p.y)._1 ++ List(p.token) ++ row.splitAt(p.y+1)._2
     val newBoard = board.splitAt(p.x)._1 ++ List(newRow) ++ board.splitAt(p.x+1)._2
     newBoard
+  }
+
+
+ def createPiece(x:Int, y:Int, token:Char): Piece = {
+    token match {
+      case 'K' => King(x,y)
+      case 'Q' => Queen(x,y)
+      case 'R' => Rook(x,y)
+      case 'B' => Bishop(x,y)
+      case 'N' => Knight(x,y)
+      case '*' => Empty(x,y)
+    }
   }
 
   def time[R](block: => Int): Result = {

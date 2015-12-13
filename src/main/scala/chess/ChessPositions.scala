@@ -1,4 +1,4 @@
-package main
+package chess
 
 /**
  * Created by saheb on 11/17/15.
@@ -6,11 +6,10 @@ package main
 
 import java.io._
 
+import Util._
+
 import scala.annotation.tailrec
 
-import main.Util._
-
-case class Piece(x: Int, y: Int, token: Char)
 case class LastPlaced(board: List[List[Char]], x: Int, y: Int, placedPieces: List[Piece])
 case class LastDisplaced(board: List[List[Char]], x: Int, y: Int, index: Int, placedPieces: List[Piece])
 case class Result(time: Long, solutions: Int)
@@ -18,59 +17,9 @@ case class Result(time: Long, solutions: Int)
 class ChessPositions(val m: Int, val n: Int, val tokens: List[Char]) {
 
   private def isSafe(p: Piece, tokens: List[Piece]) : Boolean = {
-
-    def kingAttackFn(entry: Piece): Boolean = {
-      difference(entry.x, p.x) <= 1 && difference(entry.y,p.y) <= 1
-    }
-
-    def rookAttackFn(entry: Piece): Boolean = {
-      difference(entry.x, p.x) == 0 || difference(entry.y,p.y) == 0
-    }
-
-    def knightAttackFn(entry: Piece): Boolean = {
-      (difference(entry.x, p.x) == 2 && difference(entry.y,p.y) == 1) ||  (difference(entry.x, p.x) == 1 && difference(entry.y,p.y) == 2)
-    }
-
-    def bishopAttachFn(entry: Piece): Boolean = {
-      difference(entry.x, p.x) == difference(entry.y,p.y)
-    }
-
-    val attacking = p.token match {
-      case 'K' =>
-        tokens exists kingAttackFn
-      case 'Q' =>
-        (tokens exists rookAttackFn) || (tokens exists bishopAttachFn)
-      case 'R' =>
-        tokens exists rookAttackFn
-      case 'N' =>
-        tokens exists knightAttackFn
-      case 'B' =>
-        tokens exists bishopAttachFn
-      case  _ =>
-        println("This should never be printed!")
-        false
-    }
-
-    val beingAttacked = tokens exists (piece => {
-      piece.token match {
-        case 'K' =>
-          kingAttackFn(piece)
-        case 'Q' =>
-          rookAttackFn(piece) || bishopAttachFn(piece)
-        case 'R' =>
-          rookAttackFn(piece)
-        case 'N' =>
-          knightAttackFn(piece)
-        case 'B' =>
-          bishopAttachFn(piece)
-        case  _ =>
-          println("This should never be printed!")
-          false
-      }
-    })
-
-    // Safe = Neither attacking nor being attacked.
-    !(attacking || beingAttacked)
+    val attacking = tokens exists(piece => p.attacks(piece))
+    val beingAttacked = tokens exists(piece => piece.attacks(p))
+    !(attacking || beingAttacked) // Safe = Neither attacking nor being attacked.
   }
 
   @tailrec
@@ -82,9 +31,9 @@ class ChessPositions(val m: Int, val n: Int, val tokens: List[Char]) {
     else
     {
       if(p.y+1 < n)
-        place(Piece(p.x,p.y+1,p.token),board,placedPieces)
+        place(p.cloneWithLoc(p.x,p.y+1),board,placedPieces)
       else if(p.x+1 < m)
-        place(Piece(p.x+1,0,p.token),board,placedPieces)
+        place(p.cloneWithLoc(p.x+1,0),board,placedPieces)
       else
         LastPlaced(List.empty[List[Char]],-1,-1,placedPieces)
     }
@@ -98,7 +47,7 @@ class ChessPositions(val m: Int, val n: Int, val tokens: List[Char]) {
     else
     {
       val entry = placedPieces.last
-      val displacedBoard = getBoard(Piece(entry.x,entry.y,'*'),board)
+      val displacedBoard = getBoard(Empty(entry.x,entry.y),board)
       if(entry.y + 1 >= n && entry.x + 1 >= m)
         displace(index-1,tokens,displacedBoard,placedPieces.dropRight(1))
       else
@@ -109,7 +58,7 @@ class ChessPositions(val m: Int, val n: Int, val tokens: List[Char]) {
   @tailrec
   private def solve(i: Int, j: Int,index: Int, tokens: List[Char], board: List[List[Char]],
                      placedPieces: List[Piece], numOfSolutions: Int): Int = {
-    val LastPlaced(newBoard, lastX, lastY, newlyPlaced) = place(Piece(i,j,tokens(index)),board,placedPieces)
+    val LastPlaced(newBoard, lastX, lastY, newlyPlaced) = place(createPiece(i,j,tokens(index)),board,placedPieces)
     if(newBoard.nonEmpty)
     {
         if(newlyPlaced.size == tokens.size)
@@ -181,16 +130,16 @@ class ChessPositions(val m: Int, val n: Int, val tokens: List[Char]) {
     if (writeToFile) {
       val pw = new PrintWriter(new File("Stats.txt"))
       pw.write(s"Stats are gathered by running the program on Intellij Idea 14.1.4\n")
-      pw.write(s"Number of Cores used to perform this task = ${numOfCores}\n")
+      pw.write(s"Number of Cores used to perform this task = $numOfCores\n")
       pw.write(s"Dimensions of the board are $m rows and $n columns\n")
       pw.write(s"Tokens for the problem are $tokens\n")
-      pw.write(s"Number of Solutions: ${totalSolutions}\n")
+      pw.write(s"Number of Solutions: $totalSolutions\n")
       pw.write(s"Time taken in seconds: $seconds\n")
       pw.write(s"Time taken in minutes: ${math.round(minutes)}")
       pw.close()
     }
 
-    println(s"Number of Cores used to perform this task = ${numOfCores}")
+    println(s"Number of Cores used to perform this task = $numOfCores")
     println(s"Dimensions of the board are $m rows and $n columns")
     println(s"Tokens for the problem are $tokens")
     println(s"Number of Solutions: $totalSolutions")

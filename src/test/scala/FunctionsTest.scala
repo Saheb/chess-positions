@@ -1,4 +1,4 @@
-import main.{Piece, Util, ChessPositions}
+import chess.{Util, ChessPositions}
 import org.scalatest.FunSuite
 
 /**
@@ -10,7 +10,7 @@ class FunctionsTest extends FunSuite{
     val chess = new ChessPositions(4,4,List('Q','Q','Q','Q'))
     val board = List.fill(4,4)('*')
     val newBoard = List.fill(3,4)('*') ++ List(List('*','*','*','Q'))
-    assertResult(Util.getBoard(Piece(3,3,'Q'),board))(newBoard)
+    assertResult(Util.getBoard(Util.createPiece(3,3,'Q'),board))(newBoard)
   }
 
 }

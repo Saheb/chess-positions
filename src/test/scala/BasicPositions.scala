@@ -1,4 +1,4 @@
-import main.ChessPositions
+import chess.ChessPositions
 import org.scalatest.FunSuite
 
 /**
